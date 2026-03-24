@@ -16,18 +16,18 @@
 
 from absl.testing import absltest
 import integration_test_utils
-from ucp_sdk.models.schemas.shopping import checkout_update_req
-from ucp_sdk.models.schemas.shopping import fulfillment_resp as checkout
-from ucp_sdk.models.schemas.shopping import payment_update_req
-from ucp_sdk.models.schemas.shopping.payment_resp import (
-  PaymentResponse as Payment,
+from ucp_sdk.models.schemas.shopping import checkout_update_request as checkout_update_req
+from ucp_sdk.models.schemas.shopping import checkout as checkout
+from ucp_sdk.models.schemas.shopping import payment_update_request
+from ucp_sdk.models.schemas.shopping.payment import (
+  Payment as Payment,
 )
-from ucp_sdk.models.schemas.shopping.types import item_update_req
-from ucp_sdk.models.schemas.shopping.types import line_item_update_req
+from ucp_sdk.models.schemas.shopping.types import item_update_request
+from ucp_sdk.models.schemas.shopping.types import line_item_update_request
 
 
 # Rebuild models to resolve forward references
-checkout.Checkout.model_rebuild(_types_namespace={"PaymentResponse": Payment})
+checkout.Checkout.model_rebuild(_types_namespace={"Payment": Payment})
 
 
 class ValidationTest(integration_test_utils.IntegrationTestBase):
@@ -86,21 +86,20 @@ class ValidationTest(integration_test_utils.IntegrationTestBase):
     checkout_id = checkout_obj.id
 
     # Update to excessive quantity (e.g. 10000)
-    item_update = item_update_req.ItemUpdateRequest(
+    item_update = item_update_request.ItemUpdateRequest(
       id=checkout_obj.line_items[0].item.id,
       title=checkout_obj.line_items[0].item.title,
     )
-    line_item_update = line_item_update_req.LineItemUpdateRequest(
+    line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
       item=item_update,
       quantity=10001,
     )
-    payment_update = payment_update_req.PaymentUpdateRequest(
-      selected_instrument_id=checkout_obj.payment.selected_instrument_id,
+    payment_update = payment_update_request.PaymentUpdateRequest(
       instruments=checkout_obj.payment.instruments,
       handlers=[
         h.model_dump(mode="json", exclude_none=True)
-        for h in checkout_obj.payment.handlers
+        for h in checkout_obj.payment.instruments
       ],
     )
 

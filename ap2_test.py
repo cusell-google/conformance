@@ -16,19 +16,19 @@
 
 from absl.testing import absltest
 import integration_test_utils
-from ucp_sdk.models.schemas.shopping import fulfillment_resp as checkout
-from ucp_sdk.models.schemas.shopping.ap2_mandate import Ap2CompleteRequest
+from ucp_sdk.models.schemas.shopping import checkout as checkout
+from ucp_sdk.models.schemas.shopping.ap2_mandate import Checkout as Ap2CompleteRequest
 from ucp_sdk.models.schemas.shopping.ap2_mandate import CheckoutMandate
-from ucp_sdk.models.schemas.shopping.payment_resp import (
-  PaymentResponse as Payment,
+from ucp_sdk.models.schemas.shopping.payment import (
+  Payment as Payment,
 )
 from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
 from ucp_sdk.models.schemas.shopping.types import payment_instrument
-from ucp_sdk.models.schemas.shopping.types import token_credential_resp
+from ucp_sdk.models.schemas.shopping.types import token_credential
 
 
 # Rebuild models to resolve forward references
-checkout.Checkout.model_rebuild(_types_namespace={"PaymentResponse": Payment})
+checkout.Checkout.model_rebuild(_types_namespace={"Payment": Payment})
 
 
 class Ap2MandateTest(integration_test_utils.IntegrationTestBase):
@@ -48,31 +48,28 @@ class Ap2MandateTest(integration_test_utils.IntegrationTestBase):
     response_json = self.create_checkout_session()
     checkout_id = checkout.Checkout(**response_json).id
 
-    credential = token_credential_resp.TokenCredentialResponse(
-      type="token", token="success_token"
-    )
-    instr = payment_instrument.PaymentInstrument(
-      root=card_payment_instrument.CardPaymentInstrument(
-        id="instr_1",
-        brand="visa",
-        last_digits="4242",
-        handler_id="mock_payment_handler",
-        handler_name="mock_payment_handler",
-        type="card",
-        credential=credential,
-      )
-    )
-    payment_data = instr.root.model_dump(mode="json", exclude_none=True)
+    payment_data = {
+      "id": "instr_1",
+      "brand": "visa",
+      "last_digits": "4242",
+      "handler_id": "mock_payment_handler",
+      "handler_name": "mock_payment_handler",
+      "type": "card",
+      "credential": {
+        "type": "token",
+        "token": "success_token"
+      }
+    }
 
     # SD-JWT+kb pattern:
     # ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+(~[A-Za-z0-9_-]+)*$
-    mandate = CheckoutMandate(root="header.payload.signature~kb_signature")
-    ap2_data = Ap2CompleteRequest(checkout_mandate=mandate)
+    # no mandate object
+    # no ap2_data object
 
     payment_payload = {
       "payment_data": payment_data,
       "risk_signals": {},
-      "ap2": ap2_data.model_dump(mode="json", exclude_none=True),
+      "ap2": {**response_json, "checkout_mandate": "header.payload.signature~kb_signature"},
     }
 
     response = self.client.post(

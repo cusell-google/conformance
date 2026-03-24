@@ -17,14 +17,14 @@
 from absl.testing import absltest
 import integration_test_utils
 import httpx
-from ucp_sdk.models.discovery.profile_schema import UcpDiscoveryProfile
-from ucp_sdk.models.schemas.shopping import fulfillment_resp as checkout
-from ucp_sdk.models.schemas.shopping.payment_resp import (
-  PaymentResponse as Payment,
+from ucp_sdk.models.schemas.ucp import BusinessSchema
+from ucp_sdk.models.schemas.shopping import checkout as checkout
+from ucp_sdk.models.schemas.shopping.payment import (
+  Payment as Payment,
 )
 
 # Rebuild models to resolve forward references
-checkout.Checkout.model_rebuild(_types_namespace={"PaymentResponse": Payment})
+checkout.Checkout.model_rebuild(_types_namespace={"Payment": Payment})
 
 
 class ProtocolTest(integration_test_utils.IntegrationTestBase):
@@ -36,7 +36,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
   """
 
   def _extract_document_urls(
-    self, profile: UcpDiscoveryProfile
+    self, profile: BusinessSchema
   ) -> list[tuple[str, str]]:
     """Extract all spec and schema URLs from the discovery profile.
 
@@ -47,40 +47,42 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     urls = set()
 
     # 1. Services
-    for service_name, service in profile.ucp.services.root.items():
-      base_path = f"ucp.services['{service_name}']"
-      if service.spec:
-        urls.add((f"{base_path}.spec", str(service.spec)))
-      if service.rest and service.rest.schema_:
-        urls.add((f"{base_path}.rest.schema", str(service.rest.schema_)))
-      if service.mcp and service.mcp.schema_:
-        urls.add((f"{base_path}.mcp.schema", str(service.mcp.schema_)))
-      if service.embedded and service.embedded.schema_:
-        urls.add(
-          (f"{base_path}.embedded.schema", str(service.embedded.schema_))
-        )
+    for service_name, services_list in profile.services.items():
+      for svc_idx, service in enumerate(services_list if isinstance(services_list, list) else [services_list]):
+        base_path = f"services['{service_name}'][{svc_idx}]"
+        if service.get("spec"):
+          urls.add((f"{base_path}.spec", str(service.get("spec"))))
+        if service.get("rest") and service.get("rest", {}).get("schema"):
+          urls.add((f"{base_path}.rest.schema", str(service.get("rest", {}).get("schema"))))
+        if service.get("mcp") and service.get("mcp", {}).get("schema"):
+          urls.add((f"{base_path}.mcp.schema", str(service.get("mcp", {}).get("schema"))))
+        if service.get("embedded") and service.get("embedded", {}).get("schema"):
+          urls.add(
+            (f"{base_path}.embedded.schema", str(service.get("embedded", {}).get("schema")))
+          )
 
     # 2. Capabilities
-    for i, cap in enumerate(profile.ucp.capabilities):
-      cap_name = cap.name or f"index_{i}"
+    for i, cap in enumerate(profile.capabilities or []):
+      cap_name = cap.get("name") or f"index_{i}"
       base_path = f"ucp.capabilities['{cap_name}']"
-      if cap.spec:
-        urls.add((f"{base_path}.spec", str(cap.spec)))
-      if cap.schema_:
-        urls.add((f"{base_path}.schema", str(cap.schema_)))
+      if cap.get("spec"):
+        urls.add((f"{base_path}.spec", str(cap.get("spec"))))
+      if cap.get("schema"):
+        urls.add((f"{base_path}.schema", str(cap.get("schema"))))
 
     # 3. Payment Handlers
-    if profile.payment and profile.payment.handlers:
-      for i, handler in enumerate(profile.payment.handlers):
-        handler_id = handler.id or f"index_{i}"
-        base_path = f"payment.handlers['{handler_id}']"
-        if handler.spec:
-          urls.add((f"{base_path}.spec", str(handler.spec)))
-        if handler.config_schema:
-          urls.add((f"{base_path}.config_schema", str(handler.config_schema)))
-        if handler.instrument_schemas:
-          for j, s in enumerate(handler.instrument_schemas):
-            urls.add((f"{base_path}.instrument_schemas[{j}]", str(s)))
+    if getattr(profile, "payment_handlers", None):
+      for domain, handlers in profile.payment_handlers.items():
+        for i, handler in enumerate(handlers):
+          handler_id = handler.get("id") or f"{domain}_index_{i}"
+          base_path = f"payment_handlers['{handler_id}']"
+          if handler.get("spec"):
+            urls.add((f"{base_path}.spec", str(handler.get("spec"))))
+          if handler.get("config_schema"):
+            urls.add((f"{base_path}.config_schema", str(handler.get("config_schema"))))
+          if handler.get("instrument_schemas"):
+            for j, s in enumerate(handler.get("instrument_schemas", [])):
+              urls.add((f"{base_path}.instrument_schemas[{j}]", str(s)))
 
     return sorted(urls, key=lambda x: x[0])
 
@@ -91,7 +93,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     """
     response = self.client.get("/.well-known/ucp")
     self.assert_response_status(response, 200)
-    profile = UcpDiscoveryProfile(**response.json())
+    profile = BusinessSchema(**response.json())
 
     url_entries = self._extract_document_urls(profile)
     failures = []
@@ -147,16 +149,16 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     data = response.json()
 
     # Validate schema using SDK model
-    profile = UcpDiscoveryProfile(**data)
+    profile = BusinessSchema(**data)
 
     self.assertEqual(
-      profile.ucp.version.root,
+      profile.version.root,
       "2026-01-11",
       msg="Unexpected UCP version in discovery doc",
     )
 
     # Verify Capabilities
-    capabilities = {c.name for c in profile.ucp.capabilities}
+    capabilities = {c.get("name") for c in profile.capabilities or []}
     expected_capabilities = {
       "dev.ucp.shopping.checkout",
       "dev.ucp.shopping.order",
@@ -171,7 +173,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     )
 
     # Verify Payment Handlers
-    handlers = {h.id for h in profile.payment.handlers}
+    handlers = {h.get("id") for handlers in getattr(profile, "payment_handlers", {}).values() for h in handlers}
     expected_handlers = {"google_pay", "mock_payment_handler", "shop_pay"}
     missing_handlers = expected_handlers - handlers
     self.assertFalse(
@@ -181,19 +183,20 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
 
     # Specific check for Shop Pay config
     shop_pay = next(
-      (h for h in profile.payment.handlers if h.id == "shop_pay"),
+      (h for handlers in getattr(profile, "payment_handlers", {}).values() for h in handlers if h.get("id") == "shop_pay"),
       None,
     )
     self.assertIsNotNone(shop_pay, "Shop Pay handler not found")
-    self.assertEqual(shop_pay.name, "com.shopify.shop_pay")
-    self.assertIn("shop_id", shop_pay.config)
+    self.assertEqual(shop_pay.get("name"), "com.shopify.shop_pay")
+    self.assertIn("shop_id", shop_pay.get("config"))
 
     # Verify shopping capability
-    self.assertIn("dev.ucp.shopping", profile.ucp.services.root)
-    shopping_service = profile.ucp.services.root["dev.ucp.shopping"]
-    self.assertEqual(shopping_service.version.root, "2026-01-11")
-    self.assertIsNotNone(shopping_service.rest)
-    self.assertIsNotNone(shopping_service.rest.endpoint)
+    shopping_services = (profile.services or {}).get("dev.ucp.shopping")
+    self.assertIsNotNone(shopping_services, "Shopping service missing")
+    shopping_service = shopping_services[0] if isinstance(shopping_services, list) else shopping_services
+    self.assertEqual(shopping_service.get("version"), "2026-01-11")
+    self.assertIsNotNone(shopping_service.get("rest"))
+    self.assertIsNotNone(shopping_service.get("rest", {}).get("endpoint"))
 
   def test_version_negotiation(self):
     """Test protocol version negotiation via headers.
@@ -207,20 +210,21 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     # Discover shopping service endpoint
     discovery_resp = self.client.get("/.well-known/ucp")
     self.assert_response_status(discovery_resp, 200)
-    profile = UcpDiscoveryProfile(**discovery_resp.json())
-    shopping_service = profile.ucp.services.root["dev.ucp.shopping"]
+    profile = BusinessSchema(**discovery_resp.json())
+    shopping_services = (profile.services or {}).get("dev.ucp.shopping")
     self.assertIsNotNone(
-      shopping_service, "Shopping service not found in discovery"
+      shopping_services, "Shopping service not found in discovery"
+    )
+    shopping_service = shopping_services[0] if isinstance(shopping_services, list) else shopping_services
+    self.assertIsNotNone(
+      shopping_service.get("rest"), "REST config not found for shopping service"
     )
     self.assertIsNotNone(
-      shopping_service.rest, "REST config not found for shopping service"
-    )
-    self.assertIsNotNone(
-      shopping_service.rest.endpoint,
+      shopping_service.get("rest", {}).get("endpoint"),
       "Endpoint not found for shopping service",
     )
     checkout_sessions_url = (
-      f"{str(shopping_service.rest.endpoint).rstrip('/')}/checkout-sessions"
+      f"{str(shopping_service.get('rest', {}).get('endpoint')).rstrip('/')}/checkout-sessions"
     )
 
     create_payload = self.create_checkout_payload()

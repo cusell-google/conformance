@@ -29,33 +29,35 @@ from fastapi import FastAPI
 from fastapi import Request
 from fastapi.responses import JSONResponse
 import httpx
-from ucp_sdk.models.discovery.profile_schema import UcpDiscoveryProfile
-from ucp_sdk.models.schemas.shopping import checkout_create_req
-from ucp_sdk.models.schemas.shopping import fulfillment_resp as f_models
-from ucp_sdk.models.schemas.shopping import payment_create_req
-from ucp_sdk.models.schemas.shopping import payment_update_req
-from ucp_sdk.models.schemas.shopping.discount_update_req import (
-  Checkout as DiscountUpdate,
+from ucp_sdk.models.schemas.ucp import BusinessSchema
+from ucp_sdk.models.schemas.shopping import checkout_create_request
+from ucp_sdk.models.schemas.shopping import checkout as f_models
+from ucp_sdk.models.schemas.shopping import payment_create_request
+from ucp_sdk.models.schemas.shopping import payment_update_request
+from ucp_sdk.models.schemas.shopping.checkout_update_request import (
+  CheckoutUpdateRequest,
 )
-from ucp_sdk.models.schemas.shopping.fulfillment_create_req import Fulfillment
-from ucp_sdk.models.schemas.shopping.fulfillment_update_req import (
-  Checkout as FulfillmentUpdate,
-)
+from ucp_sdk.models.schemas.shopping.types.fulfillment import Fulfillment
 from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
-from ucp_sdk.models.schemas.shopping.types import fulfillment_destination_req
-from ucp_sdk.models.schemas.shopping.types import fulfillment_group_create_req
-from ucp_sdk.models.schemas.shopping.types import fulfillment_method_create_req
-from ucp_sdk.models.schemas.shopping.types import fulfillment_req
-from ucp_sdk.models.schemas.shopping.types import item_create_req
-from ucp_sdk.models.schemas.shopping.types import item_update_req
-from ucp_sdk.models.schemas.shopping.types import line_item_create_req
-from ucp_sdk.models.schemas.shopping.types import line_item_update_req
-from ucp_sdk.models.schemas.shopping.types import payment_handler_resp
-from ucp_sdk.models.schemas.shopping.types import shipping_destination_req
+from ucp_sdk.models.schemas.shopping.types import (
+  fulfillment_destination_create_request,
+)
+from ucp_sdk.models.schemas.shopping.types import (
+  fulfillment_group_create_request,
+)
+from ucp_sdk.models.schemas.shopping.types import (
+  fulfillment_method_create_request,
+)
+from ucp_sdk.models.schemas.shopping.types import item_create_request
+from ucp_sdk.models.schemas.shopping.types import item_update_request
+from ucp_sdk.models.schemas.shopping.types import line_item_create_request
+from ucp_sdk.models.schemas.shopping.types import line_item_update_request
+from ucp_sdk.models.schemas import payment_handler
+from ucp_sdk.models.schemas.shopping.types import shipping_destination
 import uvicorn
 
 
-class UnifiedUpdate(FulfillmentUpdate, DiscountUpdate):
+class UnifiedUpdate(CheckoutUpdateRequest):
   """Client-side unified update model to support extensions."""
 
 
@@ -179,20 +181,19 @@ def get_valid_payment_payload(
     "postal_code": addr_data.get("postal_code"),
   }
 
-  # Use Pydantic model to validate/construct
-  instr_model = card_payment_instrument.CardPaymentInstrument(
-    id=instr_data["id"],
-    handler_id=instr_data["handler_id"],
-    handler_name=instr_data["handler_id"],  # Assuming same for mock
-    type=instr_data["type"],
-    brand=instr_data["brand"],
-    last_digits=instr_data["last_digits"],
-    credential={"type": "token", "token": instr_data["token"]},
-    billing_address=billing_address,
-  )
+  payment_data = {
+    "id": instr_data["id"],
+    "handler_id": instr_data["handler_id"],
+    "handler_name": instr_data["handler_id"],
+    "type": instr_data["type"],
+    "brand": instr_data["brand"],
+    "last_digits": instr_data["last_digits"],
+    "credential": {"type": "token", "token": instr_data["token"]},
+    "billing_address": billing_address,
+  }
 
   return {
-    "payment_data": instr_model.model_dump(mode="json", exclude_none=True),
+    "payment_data": payment_data,
     "risk_signals": {},
   }
 
@@ -391,11 +392,12 @@ class IntegrationTestBase(absltest.TestCase):
     if self._shopping_service_endpoint is None:
       discovery_resp = self.client.get("/.well-known/ucp")
       self.assert_response_status(discovery_resp, 200)
-      profile = UcpDiscoveryProfile(**discovery_resp.json())
-      shopping_service = profile.ucp.services.root.get("dev.ucp.shopping")
-      if not shopping_service or not shopping_service.rest:
+      profile = BusinessSchema(**discovery_resp.json())
+      shopping_service = profile.services.get("dev.ucp.shopping")
+      rest = shopping_service.get("rest") if shopping_service else None
+      if not rest:
         raise RuntimeError("Shopping service not found in discovery profile")
-      self._shopping_service_endpoint = str(shopping_service.rest.endpoint)
+      self._shopping_service_endpoint = str(rest.get("endpoint"))
     return self._shopping_service_endpoint
 
   def get_shopping_url(self, path: str) -> str:
@@ -429,7 +431,7 @@ class IntegrationTestBase(absltest.TestCase):
     handlers=None,
     buyer: dict[str, Any] | None = None,
     include_fulfillment: bool = True,
-  ) -> checkout_create_req.CheckoutCreateRequest:
+  ) -> checkout_create_request.CheckoutCreateRequest:
     """Create a valid checkout creation payload.
 
     Args:
@@ -462,7 +464,7 @@ class IntegrationTestBase(absltest.TestCase):
 
     if handlers is None:
       handlers = [
-        payment_handler_resp.PaymentHandlerResponse(
+        payment_handler.PaymentHandler(
           id="google_pay",
           name="google.pay",
           version="2026-01-11",
@@ -473,40 +475,46 @@ class IntegrationTestBase(absltest.TestCase):
         )
       ]
 
-    item = item_create_req.ItemCreateRequest(id=item_id, title=title)
-    line_item = line_item_create_req.LineItemCreateRequest(
+    item = item_create_request.ItemCreateRequest(id=item_id, title=title)
+    line_item = line_item_create_request.LineItemCreateRequest(
       quantity=quantity, item=item
     )
 
     # PaymentCreateRequest allows extra fields, so passing handlers is valid
-    payment = payment_create_req.PaymentCreateRequest(
+    payment = payment_create_request.PaymentCreateRequest(
       instruments=[],
-      selected_instrument_id="instr_1",
       handlers=[h.model_dump(mode="json", exclude_none=True) for h in handlers],
     )
 
     fulfillment = None
     if include_fulfillment:
       # Hierarchical Fulfillment Construction
-      destination = fulfillment_destination_req.FulfillmentDestinationRequest(
-        root=shipping_destination_req.ShippingDestinationRequest(
+      destination = fulfillment_destination_create_request.FulfillmentDestinationCreateRequest(
+        root=shipping_destination.ShippingDestination(
           id="dest_1", address_country="US"
         )
       )
-      group = fulfillment_group_create_req.FulfillmentGroupCreateRequest(
+      group = fulfillment_group_create_request.FulfillmentGroupCreateRequest(
+        id="group_1",
+        line_item_ids=["line_item_123"],
         selected_option_id="std-ship"
       )
-      method = fulfillment_method_create_req.FulfillmentMethodCreateRequest(
+      method = fulfillment_method_create_request.FulfillmentMethodCreateRequest(
+        id="method_1",
         type="shipping",
         destinations=[destination],
+        line_item_ids=["line_item_123"],
         selected_destination_id="dest_1",
         groups=[group],
       )
-      fulfillment = Fulfillment(
-        root=fulfillment_req.FulfillmentRequest(methods=[method])
-      )
+      fulfillment = {"methods": [method.model_dump(mode="json", exclude_none=True, by_alias=True)]}
 
-    return checkout_create_req.CheckoutCreateRequest(
+    # Set response fields on model objects for server validation workaround
+    item.price = 1000
+    line_item.id = "line_item_123"
+    line_item.totals = []
+
+    checkout_req = checkout_create_request.CheckoutCreateRequest(
       id=str(uuid.uuid4()),
       currency=currency,
       line_items=[line_item],
@@ -514,6 +522,12 @@ class IntegrationTestBase(absltest.TestCase):
       buyer=buyer,
       fulfillment=fulfillment,
     )
+    checkout_req.status = "incomplete"
+    checkout_req.ucp = {"version": "2026-01-11"}
+    checkout_req.totals = []
+    checkout_req.links = []
+
+    return checkout_req
 
   def get_headers(
     self, idempotency_key: str | None = None, request_id: str | None = None
@@ -815,27 +829,27 @@ class IntegrationTestBase(absltest.TestCase):
     if line_items is None:
       line_items = []
       for li in checkout_obj.line_items:
-        item_update = item_update_req.ItemUpdateRequest(
+        item_update = item_update_request.ItemUpdateRequest(
           id=li.item.id,
           title=li.item.title,
         )
         line_items.append(
-          line_item_update_req.LineItemUpdateRequest(
+          line_item_update_request.LineItemUpdateRequest(
             id=li.id,
             item=item_update,
             quantity=li.quantity,
+            parent_id=li.parent_id,
           )
         )
 
     # Construct Payment
     if payment is None:
-      payment = payment_update_req.PaymentUpdateRequest(
-        selected_instrument_id=checkout_obj.payment.selected_instrument_id,
-        instruments=checkout_obj.payment.instruments,
-        handlers=[
-          h.model_dump(mode="json", exclude_none=True)
-          for h in checkout_obj.payment.handlers
-        ],
+      payment = (
+        payment_update_request.PaymentUpdateRequest(
+          instruments=getattr(checkout_obj.payment, "instruments", []),
+        )
+        if checkout_obj.payment
+        else None
       )
 
     update_payload = UnifiedUpdate(

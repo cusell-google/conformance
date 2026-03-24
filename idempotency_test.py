@@ -18,13 +18,13 @@ import uuid
 
 from absl.testing import absltest
 import integration_test_utils
-from ucp_sdk.models.schemas.shopping import fulfillment_resp as checkout
-from ucp_sdk.models.schemas.shopping.payment_resp import (
-  PaymentResponse as Payment,
+from ucp_sdk.models.schemas.shopping import checkout as checkout
+from ucp_sdk.models.schemas.shopping.payment import (
+  Payment as Payment,
 )
 
 # Rebuild models to resolve forward references
-checkout.Checkout.model_rebuild(_types_namespace={"PaymentResponse": Payment})
+checkout.Checkout.model_rebuild(_types_namespace={"Payment": Payment})
 
 
 class IdempotencyTest(integration_test_utils.IntegrationTestBase):
@@ -119,7 +119,6 @@ class IdempotencyTest(integration_test_utils.IntegrationTestBase):
       )
 
     payment_req = {
-      "selected_instrument_id": checkout_obj.payment.selected_instrument_id,
       "instruments": [
         i.model_dump(mode="json", exclude_none=True)
         for i in checkout_obj.payment.instruments
