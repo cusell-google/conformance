@@ -19,7 +19,7 @@ from absl.testing import absltest
 import integration_test_utils
 from ucp_sdk.models.schemas.shopping import checkout
 from ucp_sdk.models.schemas.shopping.payment import (
-  Payment as Payment,
+  Payment,
 )
 
 # Rebuild models to resolve forward references

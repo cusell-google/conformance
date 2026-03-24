@@ -23,7 +23,7 @@ from pydantic import AnyUrl
 from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping import order
 from ucp_sdk.models.schemas.shopping.payment import (
-  Payment as Payment,
+  Payment,
 )
 from ucp_sdk.models.schemas.shopping.types import adjustment
 from ucp_sdk.models.schemas.shopping.types import fulfillment_event

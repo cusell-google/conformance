@@ -20,7 +20,7 @@ from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping.ap2_mandate import Checkout as Ap2CompleteRequest
 from ucp_sdk.models.schemas.shopping.ap2_mandate import CheckoutMandate
 from ucp_sdk.models.schemas.shopping.payment import (
-  Payment as Payment,
+  Payment,
 )
 from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
 from ucp_sdk.models.schemas.shopping.types import payment_instrument
@@ -63,8 +63,11 @@ class Ap2MandateTest(integration_test_utils.IntegrationTestBase):
 
     # SD-JWT+kb pattern:
     # ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+(~[A-Za-z0-9_-]+)*$
-    # no mandate object
-    # no ap2_data object
+    #
+    # The UCP 01-23 SDK simplifies the AP2 protocol definitions.
+    # The extension payload is now defined directly against the `ap2` key.
+    # The `mandate` wrapper object and `ap2_data` nested objects were removed
+    # from the completion payload in this release to flatten the schema.
 
     payment_payload = {
       "payment_data": payment_data,

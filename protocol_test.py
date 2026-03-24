@@ -20,7 +20,7 @@ import httpx
 from ucp_sdk.models.schemas.ucp import BusinessSchema
 from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping.payment import (
-  Payment as Payment,
+  Payment,
 )
 
 # Rebuild models to resolve forward references

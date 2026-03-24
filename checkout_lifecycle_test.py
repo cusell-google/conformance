@@ -20,7 +20,7 @@ from ucp_sdk.models.schemas.shopping import checkout_update_request as checkout_
 from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping import payment_update_request
 from ucp_sdk.models.schemas.shopping.payment import (
-  Payment as Payment,
+  Payment,
 )
 from ucp_sdk.models.schemas.shopping.types import item_update_request
 from ucp_sdk.models.schemas.shopping.types import line_item_update_request
