@@ -16,7 +16,9 @@
 
 from absl.testing import absltest
 import integration_test_utils
-from ucp_sdk.models.schemas.shopping import checkout_update_request as checkout_update_req
+from ucp_sdk.models.schemas.shopping import (
+  checkout_update_request as checkout_update_req,
+)
 from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping import payment_update_request
 from ucp_sdk.models.schemas.shopping.payment import (

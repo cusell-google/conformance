@@ -20,11 +20,6 @@ from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping.payment import (
   Payment,
 )
-from ucp_sdk.models.schemas.shopping.types import binding
-from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
-from ucp_sdk.models.schemas.shopping.types import payment_identity
-from ucp_sdk.models.schemas.shopping.types import payment_instrument
-from ucp_sdk.models.schemas.shopping.types import token_credential
 
 
 # Rebuild models to resolve forward references
@@ -61,11 +56,9 @@ class TokenBindingTest(integration_test_utils.IntegrationTestBase):
           "token": "success_token",
           "binding": {
             "checkout_id": checkout_id,
-            "identity": {
-              "access_token": "user_access_token"
-            }
-          }
-        }
+            "identity": {"access_token": "user_access_token"},
+          },
+        },
       },
       "risk_signals": {},
     }

@@ -20,8 +20,6 @@ from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping.payment import (
   Payment,
 )
-from ucp_sdk.models.schemas.shopping.types import card_credential
-from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
 
 
 # Rebuild models to resolve forward references
@@ -60,7 +58,7 @@ class CardCredentialTest(integration_test_utils.IntegrationTestBase):
         "expiry_year": 2030,
         "cvc": "123",
         "name": "John Doe",
-      }
+      },
     }
     payment_payload = {
       "payment_data": payment_data,

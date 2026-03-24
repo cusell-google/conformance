@@ -17,14 +17,15 @@
 from absl.testing import absltest
 import integration_test_utils
 from ucp_sdk.models.schemas.shopping import buyer_consent as buyer_consent
-from ucp_sdk.models.schemas.shopping import checkout_update_request as checkout_update_req
+from ucp_sdk.models.schemas.shopping import (
+  checkout_update_request as checkout_update_req,
+)
 from ucp_sdk.models.schemas.shopping import discount as discount
 from ucp_sdk.models.schemas.shopping import checkout as checkout
 from ucp_sdk.models.schemas.shopping import payment_update_request
 from ucp_sdk.models.schemas.shopping.payment import (
   Payment,
 )
-from ucp_sdk.models.schemas.shopping.types import buyer
 from ucp_sdk.models.schemas.shopping.types import buyer_update_request
 from ucp_sdk.models.schemas.shopping.types import item_update_request
 from ucp_sdk.models.schemas.shopping.types import line_item_update_request

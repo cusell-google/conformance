@@ -37,8 +37,6 @@ from ucp_sdk.models.schemas.shopping import payment_update_request
 from ucp_sdk.models.schemas.shopping.checkout_update_request import (
   CheckoutUpdateRequest,
 )
-from ucp_sdk.models.schemas.shopping.types.fulfillment import Fulfillment
-from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
 from ucp_sdk.models.schemas.shopping.types import (
   fulfillment_destination_create_request,
 )
@@ -392,12 +390,19 @@ class IntegrationTestBase(absltest.TestCase):
     if self._shopping_service_endpoint is None:
       discovery_resp = self.client.get("/.well-known/ucp")
       self.assert_response_status(discovery_resp, 200)
-      profile = BusinessSchema(**discovery_resp.json())
-      shopping_service = profile.services.get("dev.ucp.shopping")
-      rest = shopping_service.get("rest") if shopping_service else None
-      if not rest:
+      
+      profile_data = discovery_resp.json()
+      # UCP 01-23 validation changed dicts to lists
+      shopping_services = profile_data.get("services", {}).get("dev.ucp.shopping", [])
+      if not shopping_services:
         raise RuntimeError("Shopping service not found in discovery profile")
-      self._shopping_service_endpoint = str(rest.get("endpoint"))
+        
+      shopping_service = shopping_services[0] if isinstance(shopping_services, list) else shopping_services
+      
+      endpoint = shopping_service.get("endpoint") if shopping_service and shopping_service.get("transport") == "rest" else None
+      if not endpoint:
+        raise RuntimeError("Shopping service endpoint not found in discovery profile")
+      self._shopping_service_endpoint = str(endpoint)
     return self._shopping_service_endpoint
 
   def get_shopping_url(self, path: str) -> str:
@@ -489,7 +494,7 @@ class IntegrationTestBase(absltest.TestCase):
     fulfillment = None
     if include_fulfillment:
       # Hierarchical Fulfillment Construction
-      destination = fulfillment_destination_create_request.FulfillmentDestinationCreateRequest(
+      destination = fulfillment_destination_create_request.FulfillmentDestinationCreateRequest(  # noqa: E501
         root=shipping_destination.ShippingDestination(
           id="dest_1", address_country="US"
         )
@@ -497,7 +502,7 @@ class IntegrationTestBase(absltest.TestCase):
       group = fulfillment_group_create_request.FulfillmentGroupCreateRequest(
         id="group_1",
         line_item_ids=["line_item_123"],
-        selected_option_id="std-ship"
+        selected_option_id="std-ship",
       )
       method = fulfillment_method_create_request.FulfillmentMethodCreateRequest(
         id="method_1",
@@ -507,7 +512,11 @@ class IntegrationTestBase(absltest.TestCase):
         selected_destination_id="dest_1",
         groups=[group],
       )
-      fulfillment = {"methods": [method.model_dump(mode="json", exclude_none=True, by_alias=True)]}
+      fulfillment = {
+        "methods": [
+          method.model_dump(mode="json", exclude_none=True, by_alias=True)
+        ]
+      }  # noqa: E501
 
     # Set response fields on model objects for server validation workaround
     item.price = 1000

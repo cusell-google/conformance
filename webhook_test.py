@@ -23,9 +23,7 @@ from ucp_sdk.models.schemas.shopping.payment import (
 )
 
 # Rebuild models to resolve forward references
-checkout.Checkout.model_rebuild(
-  _types_namespace={"Payment": Payment}
-)
+checkout.Checkout.model_rebuild(_types_namespace={"Payment": Payment})
 
 
 class WebhookTest(integration_test_utils.IntegrationTestBase):
@@ -124,7 +122,12 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
 
     # Update to trigger address injection and selection
     self.update_checkout_session(
-      checkout_obj, fulfillment={"methods": [{"id": "method_1", "line_item_ids": ["item_123"], "type": "shipping"}]}
+      checkout_obj,
+      fulfillment={
+        "methods": [
+          {"id": "method_1", "line_item_ids": ["item_123"], "type": "shipping"}
+        ]
+      },  # noqa: E501
     )
 
     # Fetch to get injected destinations
@@ -140,26 +143,23 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
       and checkout_obj.model_extra.get("fulfillment")
       and checkout_obj.model_extra["fulfillment"].get("methods")
     )
-    if (
-      checkout_obj.model_extra['fulfillment']['methods'][0].get('destinations')
+    if checkout_obj.model_extra["fulfillment"]["methods"][0].get(
+      "destinations"
     ):
       method = checkout_obj.model_extra["fulfillment"]["methods"][0]
-      dest_id = method['destinations'][0]['id']
+      dest_id = method["destinations"][0]["id"]
       # Select destination first to calculate options
       self.update_checkout_session(
         checkout_obj,
         fulfillment={
-          "methods": [{
-
-          "id": "method_1",
-
-          "line_item_ids": ["item_1"],
-
-          "type": "shipping",
-
-          "selected_destination_id": dest_id
-
-          }]
+          "methods": [
+            {
+              "id": "method_1",
+              "line_item_ids": ["item_1"],
+              "type": "shipping",
+              "selected_destination_id": dest_id,
+            }
+          ]
         },
       )
 
@@ -169,9 +169,11 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
         headers=self.get_headers(),
       )
       checkout_obj = checkout.Checkout(**response.json())
-      method = checkout_obj.model_extra['fulfillment']['methods'][0]
-      if method.get('groups', []) and method.get('groups', [])[0].get('options', []):
-        option_id = method.get('groups', [])[0].get('options', [])[0].get('id')
+      method = checkout_obj.model_extra["fulfillment"]["methods"][0]
+      if method.get("groups", []) and method.get("groups", [])[0].get(
+        "options", []
+      ):  # noqa: E501
+        option_id = method.get("groups", [])[0].get("options", [])[0].get("id")
         self.update_checkout_session(
           checkout_obj,
           fulfillment={
@@ -181,11 +183,13 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
                 "line_item_ids": ["item_1"],
                 "type": "shipping",
                 "selected_destination_id": dest_id,
-                "groups": [{
-                   "id": "group_1",
-                   "line_item_ids": ["item_1"],
-                   "selected_option_id": option_id
-                }],
+                "groups": [
+                  {
+                    "id": "group_1",
+                    "line_item_ids": ["item_1"],
+                    "selected_option_id": option_id,
+                  }
+                ],
               }
             ]
           },
@@ -244,16 +248,18 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
       headers=self.get_headers(),
     )
     checkout_obj = checkout.Checkout(**response.json())
-    method = checkout_obj.model_extra['fulfillment']['methods'][0]
+    method = checkout_obj.model_extra["fulfillment"]["methods"][0]
 
-    if method.get('groups', []) and method.get('groups', [])[0].get('options', []):
-      option_id = method.get('groups', [])[0].get('options', [])[0].get('id')
+    if method.get("groups", []) and method.get("groups", [])[0].get(
+      "options", []
+    ):  # noqa: E501
+      option_id = method.get("groups", [])[0].get("options", [])[0].get("id")
       # Select option
       fulfillment_payload["methods"][0]["groups"] = [
         {
           "id": "group_1",
           "line_item_ids": ["item_123"],
-          "selected_option_id": option_id
+          "selected_option_id": option_id,
         }
       ]
       fulfillment_payload["methods"][0]["type"] = "shipping"

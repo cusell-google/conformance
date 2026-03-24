@@ -123,7 +123,7 @@ class InvalidInputTest(integration_test_utils.IntegrationTestBase):
       mode="json", by_alias=True, exclude_none=True
     )
 
-    # Malform the adjustments field (dict instead of list)
+    # Corrupt the adjustments field (dict instead of list)
     order_dict["adjustments"] = {"id": "adj_1", "amount": 100}
 
     # Update Order

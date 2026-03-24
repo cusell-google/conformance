@@ -17,14 +17,9 @@
 from absl.testing import absltest
 import integration_test_utils
 from ucp_sdk.models.schemas.shopping import checkout as checkout
-from ucp_sdk.models.schemas.shopping.ap2_mandate import Checkout as Ap2CompleteRequest
-from ucp_sdk.models.schemas.shopping.ap2_mandate import CheckoutMandate
 from ucp_sdk.models.schemas.shopping.payment import (
   Payment,
 )
-from ucp_sdk.models.schemas.shopping.types import card_payment_instrument
-from ucp_sdk.models.schemas.shopping.types import payment_instrument
-from ucp_sdk.models.schemas.shopping.types import token_credential
 
 
 # Rebuild models to resolve forward references
@@ -55,10 +50,7 @@ class Ap2MandateTest(integration_test_utils.IntegrationTestBase):
       "handler_id": "mock_payment_handler",
       "handler_name": "mock_payment_handler",
       "type": "card",
-      "credential": {
-        "type": "token",
-        "token": "success_token"
-      }
+      "credential": {"type": "token", "token": "success_token"},
     }
 
     # SD-JWT+kb pattern:
@@ -72,7 +64,10 @@ class Ap2MandateTest(integration_test_utils.IntegrationTestBase):
     payment_payload = {
       "payment_data": payment_data,
       "risk_signals": {},
-      "ap2": {**response_json, "checkout_mandate": "header.payload.signature~kb_signature"},
+      "ap2": {
+        **response_json,
+        "checkout_mandate": "header.payload.signature~kb_signature",
+      },
     }
 
     response = self.client.post(

@@ -129,15 +129,15 @@ class OrderTest(integration_test_utils.IntegrationTestBase):
     checkout_with_options = checkout.Checkout(**response.json())
 
     # Check options in hierarchical structure
+    checkout_json = response.json()
     options = []
-    if (
-      checkout_with_options.fulfillment
-      and checkout_with_options.model_extra['fulfillment']['methods']
-      and checkout_with_options.model_extra['fulfillment']['methods'][0]['groups']
-    ):
-      options = (
-        checkout_with_options.model_extra['fulfillment']['methods'][0]['groups'][0]['options']
-      )
+    group_info = {}
+    if checkout_json.get("fulfillment"):
+      ful = checkout_json["fulfillment"]
+      methods = ful.get("root", ful).get("methods", [])
+      if methods and methods[0].get("groups"):
+        group_info = methods[0]["groups"][0]
+        options = group_info.get("options", [])
 
     self.assertTrue(options, "No options returned")
 
@@ -147,7 +147,11 @@ class OrderTest(integration_test_utils.IntegrationTestBase):
     # Update payload to select option
     # Need to preserve the method structure
     update_payload["fulfillment"]["methods"][0]["groups"] = [
-      {"selected_option_id": option_id}
+      {
+        "id": group_info.get("id", "group_1"),
+        "line_item_ids": group_info.get("line_item_ids", ["item_123"]),
+        "selected_option_id": option_id,
+      }
     ]
 
     response = self.client.put(
@@ -240,29 +244,23 @@ class OrderTest(integration_test_utils.IntegrationTestBase):
 
     checkout_resp = resp.json()
     options = []
-    if (
-      checkout_resp.get("fulfillment")
-      and checkout_resp["fulfillment"].get("root")  # RootModel serialized?
-      and checkout_resp["fulfillment"]["root"].get("methods")
-      and checkout_resp["fulfillment"]["root"]["methods"][0].get("groups")
-    ):
-      options = checkout_resp["fulfillment"]["root"]["methods"][0]["groups"][0][
-        "options"
-      ]
-    elif (
-      checkout_resp.get("fulfillment")
-      and checkout_resp["fulfillment"].get("methods")
-      and checkout_resp["fulfillment"]["methods"][0].get("groups")
-    ):
-      options = checkout_resp["fulfillment"]["methods"][0]["groups"][0][
-        "options"
-      ]
+    group_info = {}
+    if checkout_resp.get("fulfillment"):
+      ful = checkout_resp["fulfillment"]
+      methods = ful.get("root", ful).get("methods", [])
+      if methods and methods[0].get("groups"):
+        group_info = methods[0]["groups"][0]
+        options = group_info.get("options", [])
 
     self.assertTrue(options)
 
     # Select option
     update_payload["fulfillment"]["methods"][0]["groups"] = [
-      {"selected_option_id": options[0]["id"]}
+      {
+        "id": group_info.get("id", "group_1"),
+        "line_item_ids": group_info.get("line_item_ids", ["item_123"]),
+        "selected_option_id": options[0]["id"]
+      }
     ]
 
     self.client.put(
