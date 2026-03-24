@@ -126,7 +126,7 @@ class OrderTest(integration_test_utils.IntegrationTestBase):
     )
     self.assert_response_status(response, 200)
 
-    checkout_with_options = checkout.Checkout(**response.json())
+    checkout.Checkout(**response.json())
 
     # Check options in hierarchical structure
     checkout_json = response.json()
@@ -259,7 +259,7 @@ class OrderTest(integration_test_utils.IntegrationTestBase):
       {
         "id": group_info.get("id", "group_1"),
         "line_item_ids": group_info.get("line_item_ids", ["item_123"]),
-        "selected_option_id": options[0]["id"]
+        "selected_option_id": options[0]["id"],
       }
     ]
 

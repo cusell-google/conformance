@@ -48,8 +48,10 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     urls = set()
 
     # 1. Services
-    for service_name, services_list in profile.get('services', {}).items():
-      for svc_idx, service in enumerate(services_list if isinstance(services_list, list) else [services_list]):
+    for service_name, services_list in profile.get("services", {}).items():
+      for svc_idx, service in enumerate(
+        services_list if isinstance(services_list, list) else [services_list]
+      ):
         base_path = f"services['{service_name}'][{svc_idx}]"
         if service.get("spec"):
           urls.add((f"{base_path}.spec", str(service.get("spec"))))
@@ -58,12 +60,10 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
         if service.get("transport") == "mcp" and service.get("schema"):
           urls.add((f"{base_path}.schema", str(service.get("schema"))))
         if service.get("transport") == "embedded" and service.get("schema"):
-          urls.add(
-            (f"{base_path}.schema", str(service.get("schema")))
-          )
+          urls.add((f"{base_path}.schema", str(service.get("schema"))))
 
     # 2. Capabilities
-    for cap_key, caps in profile.get('capabilities', {}).items():
+    for _cap_key, caps in profile.get("capabilities", {}).items():
       for i, cap in enumerate(caps if isinstance(caps, list) else [caps]):
         cap_name = cap.get("name") or f"index_{i}"
         base_path = f"ucp.capabilities['{cap_name}']"
@@ -73,14 +73,18 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
           urls.add((f"{base_path}.schema", str(cap.get("schema"))))
 
     # 3. Payment Handlers
-    for domain, handlers in profile.get('payment_handlers', {}).items():
-      for i, handler in enumerate(handlers if isinstance(handlers, list) else [handlers]):
+    for domain, handlers in profile.get("payment_handlers", {}).items():
+      for i, handler in enumerate(
+        handlers if isinstance(handlers, list) else [handlers]
+      ):
         handler_id = handler.get("id") or f"{domain}_index_{i}"
         base_path = f"payment_handlers['{handler_id}']"
         if handler.get("spec"):
           urls.add((f"{base_path}.spec", str(handler.get("spec"))))
         if handler.get("config_schema"):
-          urls.add((f"{base_path}.config_schema", str(handler.get("config_schema"))))
+          urls.add(
+            (f"{base_path}.config_schema", str(handler.get("config_schema")))
+          )
         if handler.get("instrument_schemas"):
           for j, s in enumerate(handler.get("instrument_schemas", [])):
             urls.add((f"{base_path}.instrument_schemas[{j}]", str(s)))
@@ -88,6 +92,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     return sorted(urls, key=lambda x: x[0])
 
   import unittest
+
   @unittest.skip("Schemas not yet published on remote ucp.dev domain")
   def test_discovery_urls(self):
     """Verify all spec and schema URLs in discovery profile are valid.
@@ -152,7 +157,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     data = response.json()
 
     # Validate schema using SDK model
-    profile = BusinessSchema(**data)
+    BusinessSchema(**data)
 
     self.assertEqual(
       data.get("version"),
@@ -161,7 +166,11 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     )
 
     # Verify Capabilities
-    capabilities = {c.get("name") for caps in data.get("capabilities", {}).values() for c in (caps if isinstance(caps, list) else [caps])}
+    capabilities = {
+      c.get("name")
+      for caps in data.get("capabilities", {}).values()
+      for c in (caps if isinstance(caps, list) else [caps])
+    }
     expected_capabilities = {
       "dev.ucp.shopping.checkout",
       "dev.ucp.shopping.order",
@@ -176,7 +185,11 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     )
 
     # Verify Payment Handlers
-    handlers = {h.get("id") for handlers in data.get('payment_handlers', {}).values() for h in (handlers if isinstance(handlers, list) else [handlers])}
+    handlers = {
+      h.get("id")
+      for handlers in data.get("payment_handlers", {}).values()
+      for h in (handlers if isinstance(handlers, list) else [handlers])
+    }
     expected_handlers = {"google_pay", "mock_payment_handler", "shop_pay"}
     missing_handlers = expected_handlers - handlers
     self.assertFalse(
@@ -186,7 +199,12 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
 
     # Specific check for Shop Pay config
     shop_pay = next(
-      (h for handlers in data.get('payment_handlers', {}).values() for h in (handlers if isinstance(handlers, list) else [handlers]) if h.get("id") == "shop_pay"),
+      (
+        h
+        for handlers in data.get("payment_handlers", {}).values()
+        for h in (handlers if isinstance(handlers, list) else [handlers])
+        if h.get("id") == "shop_pay"
+      ),
       None,
     )
     self.assertIsNotNone(shop_pay, "Shop Pay handler not found")
@@ -196,9 +214,13 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     # Verify shopping capability
     shopping_services = data.get("services", {}).get("dev.ucp.shopping")
     self.assertIsNotNone(shopping_services, "Shopping service missing")
-    shopping_service = shopping_services[0] if isinstance(shopping_services, list) else shopping_services
+    shopping_service = (
+      shopping_services[0]
+      if isinstance(shopping_services, list)
+      else shopping_services
+    )
     self.assertEqual(shopping_service.get("version"), "2026-01-11")
-    self.assertIsNotNone((shopping_service.get("transport") == "rest"))
+    self.assertIsNotNone(shopping_service.get("transport") == "rest")
     self.assertIsNotNone(shopping_service.get("endpoint"))
 
   def test_version_negotiation(self):
@@ -218,9 +240,14 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
     self.assertIsNotNone(
       shopping_services, "Shopping service not found in discovery"
     )
-    shopping_service = shopping_services[0] if isinstance(shopping_services, list) else shopping_services
+    shopping_service = (
+      shopping_services[0]
+      if isinstance(shopping_services, list)
+      else shopping_services
+    )
     self.assertIsNotNone(
-      (shopping_service.get("transport") == "rest"), "REST config not found for shopping service"
+      (shopping_service.get("transport") == "rest"),
+      "REST config not found for shopping service",
     )
     self.assertIsNotNone(
       shopping_service.get("endpoint"),

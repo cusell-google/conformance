@@ -29,7 +29,6 @@ from fastapi import FastAPI
 from fastapi import Request
 from fastapi.responses import JSONResponse
 import httpx
-from ucp_sdk.models.schemas.ucp import BusinessSchema
 from ucp_sdk.models.schemas.shopping import checkout_create_request
 from ucp_sdk.models.schemas.shopping import checkout as f_models
 from ucp_sdk.models.schemas.shopping import payment_create_request
@@ -390,18 +389,30 @@ class IntegrationTestBase(absltest.TestCase):
     if self._shopping_service_endpoint is None:
       discovery_resp = self.client.get("/.well-known/ucp")
       self.assert_response_status(discovery_resp, 200)
-      
+
       profile_data = discovery_resp.json()
       # UCP 01-23 validation changed dicts to lists
-      shopping_services = profile_data.get("services", {}).get("dev.ucp.shopping", [])
+      shopping_services = profile_data.get("services", {}).get(
+        "dev.ucp.shopping", []
+      )
       if not shopping_services:
         raise RuntimeError("Shopping service not found in discovery profile")
-        
-      shopping_service = shopping_services[0] if isinstance(shopping_services, list) else shopping_services
-      
-      endpoint = shopping_service.get("endpoint") if shopping_service and shopping_service.get("transport") == "rest" else None
+
+      shopping_service = (
+        shopping_services[0]
+        if isinstance(shopping_services, list)
+        else shopping_services
+      )
+
+      endpoint = (
+        shopping_service.get("endpoint")
+        if shopping_service and shopping_service.get("transport") == "rest"
+        else None
+      )
       if not endpoint:
-        raise RuntimeError("Shopping service endpoint not found in discovery profile")
+        raise RuntimeError(
+          "Shopping service endpoint not found in discovery profile"
+        )
       self._shopping_service_endpoint = str(endpoint)
     return self._shopping_service_endpoint
 

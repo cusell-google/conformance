@@ -82,7 +82,11 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
     checkout_with_options = checkout.Checkout(**response_json)
 
     # Verify options are generated in the nested structure
-    methods = response_json.get("fulfillment", {}).get("root", response_json.get("fulfillment", {})).get("methods", [])
+    methods = (
+      response_json.get("fulfillment", {})
+      .get("root", response_json.get("fulfillment", {}))
+      .get("methods", [])
+    )
     self.assertTrue(methods)
     method = methods[0]
     self.assertTrue(method.get("groups"))
