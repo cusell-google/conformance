@@ -161,7 +161,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
 
     self.assertEqual(
       data.get("version"),
-      "2026-01-11",
+      "2026-01-23",
       msg="Unexpected UCP version in discovery doc",
     )
 
@@ -219,7 +219,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
       if isinstance(shopping_services, list)
       else shopping_services
     )
-    self.assertEqual(shopping_service.get("version"), "2026-01-11")
+    self.assertEqual(shopping_service.get("version"), "2026-01-23")
     self.assertIsNotNone(shopping_service.get("transport") == "rest")
     self.assertIsNotNone(shopping_service.get("endpoint"))
 
