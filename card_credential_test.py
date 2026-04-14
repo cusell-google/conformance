@@ -61,7 +61,7 @@ class CardCredentialTest(integration_test_utils.IntegrationTestBase):
       },
     }
     payment_payload = {
-      "payment_data": payment_data,
+      "payment": {"instruments": [payment_data]},
       "risk_signals": {},
     }
 

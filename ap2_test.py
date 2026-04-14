@@ -62,7 +62,7 @@ class Ap2MandateTest(integration_test_utils.IntegrationTestBase):
     # from the completion payload in this release to flatten the schema.
 
     payment_payload = {
-      "payment_data": payment_data,
+      "payment": {"instruments": [payment_data]},
       "risk_signals": {},
       "ap2": {
         **response_json,

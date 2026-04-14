@@ -44,7 +44,7 @@ class TokenBindingTest(integration_test_utils.IntegrationTestBase):
     checkout_id = checkout.Checkout(**response_json).id
 
     payment_payload = {
-      "payment_data": {
+      "payment": {"instruments": [{
         "id": "instr_1",
         "brand": "visa",
         "last_digits": "4242",
@@ -59,6 +59,7 @@ class TokenBindingTest(integration_test_utils.IntegrationTestBase):
             "identity": {"access_token": "user_access_token"},
           },
         },
+      }],
       },
       "risk_signals": {},
     }

@@ -174,7 +174,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
     # Check for US options
     options = us_checkout.model_extra["fulfillment"]["methods"][0]["groups"][0][
       "options"
-    ]  # noqa: E501
+    ]
     self.assertTrue(
       options and any(o["id"] == "exp-ship-us" for o in options),
       f"Expected US express option, got {options}",
@@ -207,7 +207,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
     # Check for International options
     options = ca_checkout.model_extra["fulfillment"]["methods"][0]["groups"][0][
       "options"
-    ]  # noqa: E501
+    ]
     self.assertTrue(
       options and any(o["id"] == "exp-ship-intl" for o in options),
       f"Expected Intl express option, got {options}",
@@ -233,7 +233,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
             "line_item_ids": [checkout_obj.line_items[0].id],
           }
         ]
-      },  # noqa: E501
+      },
     )
     updated_checkout = checkout.Checkout(**response_json)
 
@@ -260,7 +260,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
             "line_item_ids": [checkout_obj.line_items[0].id],
           }
         ]
-      },  # noqa: E501
+      },
     )
     updated_checkout = checkout.Checkout(**response_json)
 
@@ -286,7 +286,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
             "line_item_ids": [checkout_obj.line_items[0].id],
           }
         ]
-      },  # noqa: E501
+      },
     )
     updated_checkout = checkout.Checkout(**response_json)
 
@@ -316,7 +316,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
             "line_item_ids": [checkout_obj.line_items[0].id],
           }
         ]
-      },  # noqa: E501
+      },
     )
     updated_checkout = checkout.Checkout(**response_json)
 
@@ -337,7 +337,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
           "selected_destination_id": "addr_2",
           "line_item_ids": [checkout_obj.line_items[0].id],
         }
-      ]  # noqa: E501
+      ]
     }
     response_json = self.update_checkout_session(
       updated_checkout, fulfillment=fulfillment_payload
@@ -348,7 +348,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
     self.assertEqual(
       final_checkout.model_extra["fulfillment"]["methods"][0][
         "selected_destination_id"
-      ],  # noqa: E501
+      ],
       "addr_2",
     )
 
@@ -479,7 +479,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
             "line_item_ids": [checkout_obj.line_items[0].id],
           }
         ]
-      },  # noqa: E501
+      },
     )
     updated_checkout_2 = checkout.Checkout(**response_json_2)
     method_2 = updated_checkout_2.model_extra["fulfillment"]["methods"][0]
@@ -569,7 +569,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
 
     options = updated_checkout.model_extra["fulfillment"]["methods"][0][
       "groups"
-    ][0]["options"]  # noqa: E501
+    ][0]["options"]
     free_shipping_option = next(
       (o for o in options if o["id"] == "std-ship"), None
     )
@@ -580,7 +580,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
         t["amount"]
         for t in free_shipping_option["totals"]
         if t["type"] == "total"
-      ),  # noqa: E501
+      ),
       None,
     )
     self.assertEqual(opt_total, 0)
@@ -619,7 +619,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
 
     options = updated_checkout.model_extra["fulfillment"]["methods"][0][
       "groups"
-    ][0]["options"]  # noqa: E501
+    ][0]["options"]
     free_shipping_option = next(
       (o for o in options if o["id"] == "std-ship"), None
     )
@@ -630,7 +630,7 @@ class FulfillmentTest(integration_test_utils.IntegrationTestBase):
         t["amount"]
         for t in free_shipping_option["totals"]
         if t["type"] == "total"
-      ),  # noqa: E501
+      ),
       None,
     )
     self.assertEqual(opt_total, 0)

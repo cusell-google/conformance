@@ -210,7 +210,7 @@ class IdempotencyTest(integration_test_utils.IntegrationTestBase):
 
     # 3. Conflict Request
     complete_payload_diff = integration_test_utils.get_valid_payment_payload()
-    complete_payload_diff["payment_data"]["credential"]["token"] = (
+    complete_payload_diff["payment"]["instruments"][0]["credential"]["token"] = (
       "different_token"
     )
     response3 = self.client.post(

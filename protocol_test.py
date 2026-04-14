@@ -261,7 +261,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
 
     # 1. Compatible Version
     headers = integration_test_utils.get_headers()
-    headers["UCP-Agent"] = 'profile="..."; version="2026-01-11"'
+    headers["UCP-Agent"] = 'profile="..."; version="2026-01-23"'
     response = self.client.post(
       checkout_sessions_url,
       json=create_payload.model_dump(

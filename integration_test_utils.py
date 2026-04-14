@@ -190,7 +190,7 @@ def get_valid_payment_payload(
   }
 
   return {
-    "payment_data": payment_data,
+    "payment": {"instruments": [payment_data]},
     "risk_signals": {},
   }
 
@@ -442,7 +442,6 @@ class IntegrationTestBase(absltest.TestCase):
     self,
     quantity=1,
     item_id: str | None = None,
-    title: str | None = None,
     currency: str | None = None,
     handlers=None,
     buyer: dict[str, Any] | None = None,
@@ -483,7 +482,7 @@ class IntegrationTestBase(absltest.TestCase):
         payment_handler.PaymentHandler(
           id="google_pay",
           name="google.pay",
-          version="2026-01-11",
+          version="2026-01-23",
           spec="https://example.com/spec",
           config_schema="https://example.com/schema",
           instrument_schemas=["https://example.com/instrument_schema"],
@@ -491,7 +490,7 @@ class IntegrationTestBase(absltest.TestCase):
         )
       ]
 
-    item = item_create_request.ItemCreateRequest(id=item_id, title=title)
+    item = item_create_request.ItemCreateRequest(id=item_id)
     line_item = line_item_create_request.LineItemCreateRequest(
       quantity=quantity, item=item
     )
@@ -505,7 +504,7 @@ class IntegrationTestBase(absltest.TestCase):
     fulfillment = None
     if include_fulfillment:
       # Hierarchical Fulfillment Construction
-      destination = fulfillment_destination_create_request.FulfillmentDestinationCreateRequest(  # noqa: E501
+      destination = fulfillment_destination_create_request.FulfillmentDestinationCreateRequest(
         root=shipping_destination.ShippingDestination(
           id="dest_1", address_country="US"
         )
@@ -527,7 +526,7 @@ class IntegrationTestBase(absltest.TestCase):
         "methods": [
           method.model_dump(mode="json", exclude_none=True, by_alias=True)
         ]
-      }  # noqa: E501
+      }
 
     # Set response fields on model objects for server validation workaround
     item.price = 1000
@@ -543,7 +542,7 @@ class IntegrationTestBase(absltest.TestCase):
       fulfillment=fulfillment,
     )
     checkout_req.status = "incomplete"
-    checkout_req.ucp = {"version": "2026-01-11"}
+    checkout_req.ucp = {"version": "2026-01-23"}
     checkout_req.totals = []
     checkout_req.links = []
 
@@ -596,7 +595,6 @@ class IntegrationTestBase(absltest.TestCase):
     self,
     quantity: int = 1,
     item_id: str | None = None,
-    title: str | None = None,
     currency: str | None = None,
     handlers: list[Any] | None = None,
     buyer: dict[str, Any] | None = None,
@@ -624,7 +622,6 @@ class IntegrationTestBase(absltest.TestCase):
     create_payload = self.create_checkout_payload(
       quantity=quantity,
       item_id=item_id,
-      title=title,
       currency=currency,
       handlers=handlers,
       buyer=buyer,
@@ -851,7 +848,6 @@ class IntegrationTestBase(absltest.TestCase):
       for li in checkout_obj.line_items:
         item_update = item_update_request.ItemUpdateRequest(
           id=li.item.id,
-          title=li.item.title,
         )
         line_items.append(
           line_item_update_request.LineItemUpdateRequest(

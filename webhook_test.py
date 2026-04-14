@@ -127,7 +127,7 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
         "methods": [
           {"id": "method_1", "line_item_ids": ["item_123"], "type": "shipping"}
         ]
-      },  # noqa: E501
+      },
     )
 
     # Fetch to get injected destinations
@@ -172,7 +172,7 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
       method = checkout_obj.model_extra["fulfillment"]["methods"][0]
       if method.get("groups", []) and method.get("groups", [])[0].get(
         "options", []
-      ):  # noqa: E501
+      ):
         option_id = method.get("groups", [])[0].get("options", [])[0].get("id")
         self.update_checkout_session(
           checkout_obj,
@@ -252,7 +252,7 @@ class WebhookTest(integration_test_utils.IntegrationTestBase):
 
     if method.get("groups", []) and method.get("groups", [])[0].get(
       "options", []
-    ):  # noqa: E501
+    ):
       option_id = method.get("groups", [])[0].get("options", [])[0].get("id")
       # Select option
       fulfillment_payload["methods"][0]["groups"] = [

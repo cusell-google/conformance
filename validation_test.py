@@ -56,9 +56,7 @@ class ValidationTest(integration_test_utils.IntegrationTestBase):
     )
 
     create_payload = self.create_checkout_payload(
-      item_id=out_of_stock_item["id"],
-      title=out_of_stock_item["title"],
-    )
+      item_id=out_of_stock_item["id"])
 
     response = self.client.post(
       self.get_shopping_url("/checkout-sessions"),
@@ -89,9 +87,7 @@ class ValidationTest(integration_test_utils.IntegrationTestBase):
 
     # Update to excessive quantity (e.g. 10000)
     item_update = item_update_request.ItemUpdateRequest(
-      id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
-    )
+      id=checkout_obj.line_items[0].item.id)
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
       item=item_update,
@@ -139,9 +135,7 @@ class ValidationTest(integration_test_utils.IntegrationTestBase):
     )
 
     create_payload = self.create_checkout_payload(
-      item_id=non_existent_item["id"],
-      title=non_existent_item["title"],
-    )
+      item_id=non_existent_item["id"])
 
     response = self.client.post(
       self.get_shopping_url("/checkout-sessions"),

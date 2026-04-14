@@ -64,7 +64,6 @@ class BusinessLogicTest(integration_test_utils.IntegrationTestBase):
     # if not specified, but the server should ignore client-provided values
     # and use the authoritative price from its DB (which matches our config).
     response_json = self.create_checkout_session(
-      title="Wrong Title", select_fulfillment=False
     )
     checkout_obj = checkout.Checkout(**response_json)
 
@@ -132,9 +131,7 @@ class BusinessLogicTest(integration_test_utils.IntegrationTestBase):
 
     # Update quantity to 2. Total should be 2 * expected_price.
     item_update = item_update_request.ItemUpdateRequest(
-      id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
-    )
+      id=checkout_obj.line_items[0].item.id)
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
       item=item_update,
@@ -196,9 +193,7 @@ class BusinessLogicTest(integration_test_utils.IntegrationTestBase):
 
     # Apply Discount
     item_update = item_update_request.ItemUpdateRequest(
-      id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
-    )
+      id=checkout_obj.line_items[0].item.id)
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
       item=item_update,
@@ -485,9 +480,7 @@ class BusinessLogicTest(integration_test_utils.IntegrationTestBase):
 
     # Update with buyer info
     item_update = item_update_request.ItemUpdateRequest(
-      id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
-    )
+      id=checkout_obj.line_items[0].item.id)
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
       item=item_update,
