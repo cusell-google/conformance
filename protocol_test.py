@@ -167,9 +167,7 @@ class ProtocolTest(integration_test_utils.IntegrationTestBase):
 
     # Verify Capabilities
     capabilities = {
-      c.get("name")
-      for caps in data.get("capabilities", {}).values()
-      for c in (caps if isinstance(caps, list) else [caps])
+      cap_name for cap_name in data.get("capabilities", {}).keys()
     }
     expected_capabilities = {
       "dev.ucp.shopping.checkout",
