@@ -55,7 +55,7 @@ class TokenBindingTest(integration_test_utils.IntegrationTestBase):
               "last_digits": "4242",
             },
             "credential": {
-              "type": "stripe_token",
+              "type": "token",
               "token": "success_token",
               "binding": {
                 "checkout_id": checkout_id,
