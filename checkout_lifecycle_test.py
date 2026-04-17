@@ -91,7 +91,6 @@ class CheckoutLifecycleTest(integration_test_utils.IntegrationTestBase):
     # Construct Update Request
     item_update = item_update_request.ItemUpdateRequest(
       id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
     )
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
@@ -246,7 +245,6 @@ class CheckoutLifecycleTest(integration_test_utils.IntegrationTestBase):
     # Try Update
     item_update = item_update_request.ItemUpdateRequest(
       id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
     )
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,
@@ -355,7 +353,6 @@ class CheckoutLifecycleTest(integration_test_utils.IntegrationTestBase):
     # Try Update
     item_update = item_update_request.ItemUpdateRequest(
       id=checkout_obj.line_items[0].item.id,
-      title=checkout_obj.line_items[0].item.title,
     )
     line_item_update = line_item_update_request.LineItemUpdateRequest(
       id=checkout_obj.line_items[0].id,

@@ -443,7 +443,6 @@ class IntegrationTestBase(absltest.TestCase):
     self,
     quantity=1,
     item_id: str | None = None,
-    title: str | None = None,
     currency: str | None = None,
     handlers=None,
     buyer: dict[str, Any] | None = None,
@@ -454,7 +453,6 @@ class IntegrationTestBase(absltest.TestCase):
     Args:
         quantity: Number of items to purchase. Defaults to 1.
         item_id: ID of the item. Defaults to config or "item_1".
-        title: Title of the item. Defaults to config or "Test Item".
         currency: Currency code. Defaults to config or "USD".
         handlers: Optional list of payment handlers. If None, defaults to Google
           Pay.
@@ -474,8 +472,6 @@ class IntegrationTestBase(absltest.TestCase):
 
     if item_id is None:
       item_id = default_item.get("id", "item_1")
-    if title is None:
-      title = default_item.get("title", "Test Item")
     if currency is None:
       currency = self.conformance_config.get("currency", "USD")
 
@@ -492,7 +488,7 @@ class IntegrationTestBase(absltest.TestCase):
         )
       ]
 
-    item = item_create_request.ItemCreateRequest(id=item_id, title=title)
+    item = item_create_request.ItemCreateRequest(id=item_id)
     line_item = line_item_create_request.LineItemCreateRequest(
       quantity=quantity, item=item
     )
@@ -597,7 +593,6 @@ class IntegrationTestBase(absltest.TestCase):
     self,
     quantity: int = 1,
     item_id: str | None = None,
-    title: str | None = None,
     currency: str | None = None,
     handlers: list[Any] | None = None,
     buyer: dict[str, Any] | None = None,
@@ -609,7 +604,6 @@ class IntegrationTestBase(absltest.TestCase):
     Args:
         quantity: Number of items to purchase. Defaults to 1.
         item_id: ID of the item. Defaults to config or "item_1".
-        title: Title of the item. Defaults to config or "Test Item".
         currency: Currency code. Defaults to config or "USD".
         handlers: Optional list of payment handlers. If None, defaults to Google
           Pay.
@@ -625,7 +619,6 @@ class IntegrationTestBase(absltest.TestCase):
     create_payload = self.create_checkout_payload(
       quantity=quantity,
       item_id=item_id,
-      title=title,
       currency=currency,
       handlers=handlers,
       buyer=buyer,
@@ -852,7 +845,6 @@ class IntegrationTestBase(absltest.TestCase):
       for li in checkout_obj.line_items:
         item_update = item_update_request.ItemUpdateRequest(
           id=li.item.id,
-          title=li.item.title,
         )
         line_items.append(
           line_item_update_request.LineItemUpdateRequest(
