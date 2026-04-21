@@ -6,8 +6,8 @@
         {
           "name": "dev.ucp.shopping.order",
           "version": "2026-01-23",
-          "spec": "https://ucp.dev/specs/shopping/order",
-          "schema": "https://ucp.dev/schemas/shopping/order.json",
+          "spec": "https://ucp.dev/2026-01-23/specification/order/",
+          "schema": "https://ucp.dev/2026-01-23/schemas/shopping/order.json",
           "config": {
             "webhook_url": "http://localhost:{webhook_port}/webhooks/partners/test_partner/events/order"
           }
